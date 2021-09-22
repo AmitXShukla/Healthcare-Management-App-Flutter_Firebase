@@ -210,5 +210,6 @@ Backend:
 ```
 </ul>
 
+![Pic 4](./images/env_variable.png)
 ![Pic 4](./images/social_auth.png)
 ![Pic 4](./images/rules.png)
