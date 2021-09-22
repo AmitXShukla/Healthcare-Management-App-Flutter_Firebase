@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:src/shared/custom_style.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AboutUs extends StatefulWidget {
   static const routeName = '/aboutus';
@@ -185,10 +186,12 @@ class _AboutUsState extends State<AboutUs> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: <Widget>[
                     IconButton(
-                      icon: Image.network(
-                        'https://raw.githubusercontent.com/AmitXShukla/AmitXShukla.github.io/master/assets/icons/youtube.svg',
-                        width: 30,
-                        height: 30,
+                      icon: SvgPicture.network(
+                        "https://raw.githubusercontent.com/AmitXShukla/AmitXShukla.github.io/master/assets/icons/youtube.svg",
+                        color: Colors.red,
+                        semanticsLabel: 'YouTube',
+                        width: 40,
+                        height: 40,
                       ),
                       onPressed: () => setState(() {
                         _launched = _launchInBrowser(
@@ -197,10 +200,10 @@ class _AboutUsState extends State<AboutUs> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: Image.network(
+                      icon: SvgPicture.network(
                         'https://raw.githubusercontent.com/AmitXShukla/AmitXShukla.github.io/master/assets/icons/twitter_2.svg',
-                        width: 50,
-                        height: 50,
+                        width: 40,
+                        height: 40,
                       ),
                       onPressed: () => setState(() {
                         _launched =
@@ -209,10 +212,10 @@ class _AboutUsState extends State<AboutUs> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: Image.network(
+                      icon: SvgPicture.network(
                         'https://raw.githubusercontent.com/AmitXShukla/AmitXShukla.github.io/master/assets/icons/github.svg',
-                        width: 30,
-                        height: 30,
+                        width: 40,
+                        height: 40,
                       ),
                       onPressed: () => setState(() {
                         _launched =
@@ -221,10 +224,10 @@ class _AboutUsState extends State<AboutUs> {
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: Image.network(
+                      icon: SvgPicture.network(
                         'https://raw.githubusercontent.com/AmitXShukla/AmitXShukla.github.io/master/assets/icons/medium.svg',
-                        width: 30,
-                        height: 30,
+                        width: 40,
+                        height: 40,
                       ),
                       onPressed: () => setState(() {
                         _launched =

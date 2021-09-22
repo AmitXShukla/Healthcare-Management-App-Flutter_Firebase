@@ -70,9 +70,23 @@ class AuthBloc extends Object with Validators {
     return false;
   }
 
+  Future getDocData(String filter, String docId) async {
+    if (auth.currentUser != null) {
+      if (filter == "users") return users.doc(docId).get();
+    }
+    return false;
+  }
+
   Future getPatientData(String id) async {
     if (auth.currentUser != null) {
       return person.doc(id).get();
+    }
+    return false;
+  }
+
+  Future getVaccineData(String id) async {
+    if (auth.currentUser != null) {
+      return vaccine.doc(id).get();
     }
     return false;
   }
@@ -86,8 +100,7 @@ class AuthBloc extends Object with Validators {
         .snapshots();
   }
 
-  Future<void> setUserData(String filter, formData) async {
-    // print(PersonDataModel.toJson(formData));
+  Future setUserData(String filter, formData) async {
     if (filter == "person")
       return person.doc(auth.currentUser.uid).set({
         'name': formData.name,
@@ -115,7 +128,8 @@ class AuthBloc extends Object with Validators {
         'name': formData.name,
         'phone': formData.phone,
         'comments': formData.comments,
-        'author': auth.currentUser.uid // uid
+        'author': auth.currentUser.uid, // uid
+        'status': formData.status // uid
       });
     if (filter == "vaccine")
       return vaccine.doc(formData.author).set({
@@ -142,14 +156,81 @@ class AuthBloc extends Object with Validators {
       });
   }
 
+  Future<void> setVaccineData(VaccineDataModel formData) async {
+    return person.doc(formData.patientId).collection("Vaccine").add({
+      'appointmentDate': formData.appointmentDate,
+      'newAppointmentDate': formData.newAppointmentDate,
+      'author': formData.patientId
+    });
+  }
+
+  Future<void> setOPDData(OPDDataModel formData) async {
+    return person.doc(formData.patientId).collection("OPD").add({
+      'opdDate': DateTime.now(),
+      'symptoms': formData.symptoms,
+      'diagnosis': formData.diagnosis,
+      'treatment': formData.treatment,
+      'rx': formData.rx,
+      'lab': formData.lab,
+      'comments': formData.comments,
+      'author': formData.patientId
+    });
+  }
+
+  Future<void> setMessagesData(MessagesDataModel formData) async {
+    return person.doc(formData.patientId).collection("OPD").add({
+      'messagesDate': DateTime.now(),
+      'from': formData.from,
+      'status': formData.status,
+      'message': formData.message,
+      'readReceipt': formData.readReceipt,
+      'author': formData.patientId
+    });
+  }
+
+  Future<void> setRxData(RxDataModel formData) async {
+    return person.doc(formData.patientId).collection("Rx").add({
+      'rxDate': DateTime.now(),
+      'from': formData.from,
+      'status': formData.status,
+      'rx': formData.rx,
+      'results': formData.results,
+      'descr': formData.descr,
+      'comments': formData.comments,
+      'author': formData.patientId
+    });
+  }
+
+  Future<void> setLABData(LabDataModel formData) async {
+    return person.doc(formData.patientId).collection("Lab").add({
+      'labDate': DateTime.now(),
+      'from': formData.from,
+      'status': formData.status,
+      'lab': formData.lab,
+      'results': formData.results,
+      'descr': formData.descr,
+      'comments': formData.comments,
+      'author': formData.patientId
+    });
+  }
+
   Future<void> setData(SettingsDataModel formData) async {
-    // Call the user's CollectionReference to add a new user
     return users.doc(auth.currentUser.uid).set({
       'name': formData.name, // John Doe
       'phone': formData.phone, // Phone
       'email': formData.email,
       'role': formData.role,
       'author': auth.currentUser.uid // uid
+    });
+  }
+
+  Future<void> updData(SettingsDataModel formData) async {
+    return users.doc(formData.author).set({
+      'name': formData.name, // John Doe
+      'phone': formData.phone, // Phone
+      'email': formData.email,
+      'role': formData.role,
+      'author': formData.author // uid
     });
   }
 

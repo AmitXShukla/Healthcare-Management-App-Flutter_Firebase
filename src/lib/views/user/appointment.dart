@@ -86,6 +86,7 @@ class AppointmentState extends State<Appointment> {
   }
 
   Future setData(AuthBloc authBloc) async {
+    formData.status = "New";
     toggleSpinner();
     messageVisible = true;
     await authBloc

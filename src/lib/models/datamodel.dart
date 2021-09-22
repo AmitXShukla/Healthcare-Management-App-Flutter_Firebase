@@ -29,12 +29,14 @@ class AppointmentDataModel {
   String phone;
   String comments;
   String author;
+  String status;
   AppointmentDataModel(
       {this.appointmentDate,
       this.name,
       this.phone,
       this.comments,
-      this.author});
+      this.author,
+      this.status});
   factory AppointmentDataModel.fromJson(Map<String, dynamic> json) {
     return AppointmentDataModel(
       appointmentDate: json['appointmentDate'],
@@ -42,6 +44,7 @@ class AppointmentDataModel {
       phone: json['phone'],
       comments: json['comments'],
       author: json['author'],
+      status: json['status'],
     );
   }
 }
@@ -58,6 +61,140 @@ class VisitDataModel {
       visitDate: json['visitDate'],
       visitorName: json['visitorName'],
       visitorID: json['visitorID'],
+      author: json['author'],
+    );
+  }
+}
+
+class MessagesDataModel {
+  String patientId;
+  String messagesDate;
+  String from;
+  String status;
+  String message;
+  bool readReceipt;
+  String author;
+  MessagesDataModel(
+      {this.patientId,
+      this.messagesDate,
+      this.from,
+      this.status,
+      this.message,
+      this.readReceipt,
+      this.author});
+  factory MessagesDataModel.fromJson(Map<String, dynamic> json) {
+    return MessagesDataModel(
+      patientId: json['patientId'],
+      messagesDate: json['messagesDate'],
+      from: json['from'],
+      status: json['status'],
+      message: json['message'],
+      readReceipt: json['readReceipt'],
+      author: json['author'],
+    );
+  }
+}
+
+class OPDDataModel {
+  String patientId;
+  String opdDate;
+  String symptoms;
+  String diagnosis;
+  String treatment;
+  String rx;
+  String lab;
+  String comments;
+  String author;
+  OPDDataModel(
+      {this.patientId,
+      this.opdDate,
+      this.symptoms,
+      this.diagnosis,
+      this.treatment,
+      this.rx,
+      this.lab,
+      this.comments,
+      this.author});
+  factory OPDDataModel.fromJson(Map<String, dynamic> json) {
+    return OPDDataModel(
+      patientId: json['patientId'],
+      opdDate: json['opdDate'],
+      symptoms: json['symptoms'],
+      diagnosis: json['diagnosis'],
+      treatment: json['treatment'],
+      rx: json['rx'],
+      lab: json['lab'],
+      comments: json['comments'],
+      author: json['author'],
+    );
+  }
+}
+
+class LabDataModel {
+  String patientId;
+  String labDate;
+  String from;
+  String status;
+  String lab;
+  String results;
+  String descr;
+  String comments;
+  String author;
+  LabDataModel(
+      {this.patientId,
+      this.labDate,
+      this.from,
+      this.status,
+      this.lab,
+      this.results,
+      this.descr,
+      this.comments,
+      this.author});
+  factory LabDataModel.fromJson(Map<String, dynamic> json) {
+    return LabDataModel(
+      patientId: json['patientId'],
+      labDate: json['labDate'],
+      from: json['from'],
+      status: json['status'],
+      lab: json['lab'],
+      results: json['results'],
+      descr: json['descr'],
+      comments: json['comments'],
+      author: json['author'],
+    );
+  }
+}
+
+class RxDataModel {
+  String patientId;
+  String rxDate;
+  String from;
+  String status;
+  String rx;
+  String results;
+  String descr;
+  String comments;
+  String author;
+  RxDataModel(
+      {this.patientId,
+      this.rxDate,
+      this.from,
+      this.status,
+      this.rx,
+      this.results,
+      this.descr,
+      this.comments,
+      this.author});
+  factory RxDataModel.fromJson(Map<String, dynamic> json) {
+    return RxDataModel(
+      patientId: json['patientId'],
+      rxDate: json['rxDate'],
+      from: json['from'],
+      status: json['status'],
+      rx: json['rx'],
+      results: json['results'],
+      descr: json['descr'],
+      comments: json['comments'],
       author: json['author'],
     );
   }
@@ -130,74 +267,24 @@ class PersonDataModel {
 }
 
 class VaccineDataModel {
+  String patientId;
   String appointmentDate;
   String newAppointmentDate;
-  String name;
-  String idType;
-  String id;
-  String sir;
-  String occupation;
-  String
-      warrior; // na, military, healthcareworker, police, firefighter, frontline worker, senior, educator
-  String dob;
-  String gender; // m, f, o
-  String medicalHistory;
-  String race; // n, s, e , w, decline
-  String address;
-  String zipcode;
-  String citiesTravelled;
-  String siblings;
-  String familyMembers;
-  String socialActiveness;
-  String declineParticipation; // y, n
   String author;
   VaccineDataModel(
-      {this.appointmentDate,
+      {this.patientId,
+      this.appointmentDate,
       this.newAppointmentDate,
-      this.name,
-      this.idType,
-      this.id,
-      this.sir,
-      this.occupation,
-      this.warrior,
-      this.dob,
-      this.gender,
-      this.medicalHistory,
-      this.race,
-      this.address,
-      this.zipcode,
-      this.citiesTravelled,
-      this.siblings,
-      this.familyMembers,
-      this.socialActiveness,
-      this.declineParticipation,
       this.author});
   factory VaccineDataModel.fromJson(Map<String, dynamic> json) {
     return VaccineDataModel(
-      appointmentDate: json['appointmentDate'],
-      newAppointmentDate: json['newAppointmentDate'],
-      name: json['name'],
-      idType: json['idType'],
-      id: json['id'],
-      sir: json['sir'],
-      occupation: json['occupation'],
-      warrior: json['warrior'],
-      dob: json['dob'],
-      gender: json['gender'],
-      medicalHistory: json['medicalHistory'],
-      race: json['race'],
-      address: json['address'],
-      zipcode: json['zipcode'],
-      citiesTravelled: json['citiesTravelled'],
-      siblings: json['siblings'],
-      familyMembers: json['familyMembers'],
-      socialActiveness: json['socialActiveness'],
-      declineParticipation: json['declineParticipation'],
-      author: json['author'],
-    );
+        patientId: json['patientId'],
+        appointmentDate: json['appointmentDate'],
+        newAppointmentDate: json['newAppointmentDate'],
+        author: json['author']);
   }
   factory VaccineDataModel.toJson(Map<String, dynamic> json) {
-    return VaccineDataModel(name: json['name']);
+    return VaccineDataModel(patientId: json['patientId']);
   }
 }
 
@@ -205,6 +292,13 @@ class ScreenArguments {
   final String patientID;
 
   ScreenArguments(this.patientID);
+}
+
+class ScreenPatientArguments {
+  final String reportType;
+  final String patientID;
+
+  ScreenPatientArguments(this.reportType, this.patientID);
 }
 
 class DBDataModel {

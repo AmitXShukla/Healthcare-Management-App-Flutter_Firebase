@@ -167,6 +167,14 @@ class ReportsState extends State<Reports> {
                 height: 10,
               ),
               Text(
+                "Patient Vaccine records",
+                style: cBodyText,
+              ),
+              SizedBox(
+                width: 10,
+                height: 10,
+              ),
+              Text(
                 "OPD/IPD records",
                 style: cBodyText,
               ),

@@ -2,27 +2,38 @@ import 'dart:async';
 import 'package:src/blocs/auth/auth.bloc.dart';
 import 'package:src/shared/custom_components.dart';
 import 'package:src/shared/custom_style.dart';
+import 'package:src/models/datamodel.dart';
+import 'package:src/blocs/validators.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
-class Records extends StatefulWidget {
-  static const routeName = '/records';
+class LAB extends StatefulWidget {
+  static const routeName = '/lab';
   @override
-  RecordsState createState() => RecordsState();
+  LABState createState() => LABState();
 }
 
-class RecordsState extends State<Records> {
-  FirebaseAuth auth = FirebaseAuth.instance;
+class LABState extends State<LAB> {
   bool spinnerVisible = false;
   bool messageVisible = false;
   bool isAdmin = false;
   String messageTxt = "";
   String messageType = "";
-  String displayPage = "Vaccine";
+  final _formKey = GlobalKey<FormState>();
+  LabDataModel formData = LabDataModel();
+  bool _btnEnabled = false;
+  String displayPage = "DataEntry";
+  TextEditingController _labDate = new TextEditingController();
+  TextEditingController _from = new TextEditingController();
+  TextEditingController _status = new TextEditingController();
+  TextEditingController _lab = new TextEditingController();
+  TextEditingController _results = new TextEditingController();
+  TextEditingController _descr = new TextEditingController();
+  TextEditingController _comments = new TextEditingController();
 
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) => this.setPatientID());
     super.initState();
   }
 
@@ -50,6 +61,11 @@ class RecordsState extends State<Records> {
     });
   }
 
+  setPatientID() {
+    final ScreenArguments args = ModalRoute.of(context).settings.arguments;
+    formData.patientId = args.patientID;
+  }
+
   getData(filter, docId) {
     Query qry;
 
@@ -66,20 +82,96 @@ class RecordsState extends State<Records> {
     return qry.limit(10).snapshots();
   }
 
+  Future setData(AuthBloc authBloc) async {
+    toggleSpinner();
+    messageVisible = true;
+    await authBloc
+        .setLABData(formData)
+        .then((res) => {
+              showMessage(true, "success",
+                  "Data is saved. DO NOT click on SAVE Again. Lab Record is added. click on appointments now.")
+            })
+        .catchError((error) => {showMessage(true, "error", error.toString())});
+    toggleSpinner();
+  }
+
+  Future<void> _deleteDoc(String patientId, String collID, String docId) async {
+    toggleSpinner();
+    messageVisible = true;
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirm'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                    'Are you sure you want to mark this record? Record #: $docId')
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Confirm'),
+              onPressed: () {
+                authBloc.person
+                    .doc(patientId)
+                    .collection(collID)
+                    .doc(docId)
+                    .delete()
+                    .then((res) =>
+                        {showMessage(true, "success", "Record Deleted.")})
+                    .catchError((error) =>
+                        {showMessage(true, "error", error.toString())});
+                Navigator.of(context).pop();
+                toggleSpinner();
+              },
+            ),
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                toggleSpinner();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final ScreenArguments args = ModalRoute.of(context).settings.arguments;
+    AuthBloc authBloc = AuthBloc();
     return new Scaffold(
-      appBar: AppBar(title: const Text(cPRecords)),
-      drawer: Drawer(child: CustomGuestDrawer()),
+      appBar: AppBar(title: const Text(cPathologysTitle)),
+      drawer: Drawer(child: CustomAdminDrawer()),
       body: ListView(
         children: [
           Center(
             child: Container(
                 width: 600,
-                height: 600,
+                height: 800,
                 margin: EdgeInsets.all(20.0),
                 child: authBloc.isSignedIn()
-                    ? settings(authBloc)
+                    ? displayPage == "DataEntry"
+                        ? settings(authBloc, args.patientID)
+                        : displayPage == "Vaccine"
+                            ? showVaccineHistory(context, authBloc)
+                            : (displayPage == "Person")
+                                ? showPersonHistory(context, authBloc)
+                                : (displayPage == "OPD")
+                                    ? showOPDHistory(context, authBloc)
+                                    : (displayPage == "Rx")
+                                        ? showRxHistory(context, authBloc)
+                                        : (displayPage == "Lab")
+                                            ? showLabHistory(context, authBloc)
+                                            : showMessagesHistory(
+                                                context, authBloc)
                     : loginPage(authBloc)),
           )
         ],
@@ -90,7 +182,6 @@ class RecordsState extends State<Records> {
   Widget loginPage(AuthBloc authBloc) {
     return Column(
       children: [
-        SizedBox(width: 10, height: 50),
         ElevatedButton(
           child: Text('Click here to go to Login page'),
           onPressed: () {
@@ -104,88 +195,221 @@ class RecordsState extends State<Records> {
     );
   }
 
-  Widget settings(AuthBloc authBloc) {
-    return Center(
-      child: Column(
-        children: <Widget>[
-          Container(
-            margin: EdgeInsets.only(top: 25.0),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                  icon: Icon(Icons.settings, color: Colors.blue),
-                  onPressed: null),
-              Text("Past Visit Records", style: cHeaderDarkText),
-              SizedBox(
-                width: 5,
-                height: 5,
-              ),
-              IconButton(
-                  icon: Icon(Icons.healing_rounded, color: Colors.green),
+  Widget settings(AuthBloc authBloc, String patientID) {
+    return Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.always,
+      onChanged: () =>
+          setState(() => _btnEnabled = _formKey.currentState.validate()),
+      child: Center(
+        child: Column(
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                    icon: Icon(Icons.sanitizer, color: Colors.orangeAccent),
+                    onPressed: null),
+                Text("Update Lab Data", style: cHeaderDarkText),
+                SizedBox(
+                  width: 5,
+                  height: 5,
+                ),
+                IconButton(
+                    icon: Icon(Icons.healing_rounded, color: Colors.green),
+                    onPressed: () {
+                      togglePage("Vaccine");
+                    }),
+                IconButton(
+                    icon: Icon(Icons.person, color: Colors.blueGrey),
+                    onPressed: () {
+                      togglePage("Person");
+                    }),
+                IconButton(
+                    icon: Icon(Icons.view_headline, color: Colors.greenAccent),
+                    onPressed: () {
+                      togglePage("OPD");
+                    }),
+                IconButton(
+                    icon: Icon(Icons.hot_tub, color: Colors.red),
+                    onPressed: () {
+                      togglePage("Rx");
+                    }),
+                IconButton(
+                    icon: Icon(Icons.sanitizer, color: Colors.orangeAccent),
+                    onPressed: () {
+                      togglePage("Lab");
+                    }),
+                IconButton(
+                    icon: Icon(Icons.sms, color: Colors.deepPurple),
+                    onPressed: () {
+                      togglePage("Messages");
+                    }),
+              ],
+            ),
+            SizedBox(width: 10, height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                signinSubmitBtn(context, authBloc),
+                SizedBox(
+                  width: 10,
+                  height: 10,
+                ),
+                ElevatedButton(
+                  child: Text('Back'),
                   onPressed: () {
-                    togglePage("Vaccine");
-                  }),
-              IconButton(
-                  icon: Icon(Icons.person, color: Colors.blueGrey),
-                  onPressed: () {
-                    togglePage("Person");
-                  }),
-              IconButton(
-                  icon: Icon(Icons.view_headline, color: Colors.greenAccent),
-                  onPressed: () {
-                    togglePage("OPD");
-                  }),
-              IconButton(
-                  icon: Icon(Icons.hot_tub, color: Colors.red),
-                  onPressed: () {
-                    togglePage("Rx");
-                  }),
-              IconButton(
-                  icon: Icon(Icons.sanitizer, color: Colors.orangeAccent),
-                  onPressed: () {
-                    togglePage("Lab");
-                  }),
-              IconButton(
-                  icon: Icon(Icons.sms, color: Colors.deepPurple),
-                  onPressed: () {
-                    togglePage("Messages");
-                  }),
-            ],
-          ),
-          SizedBox(
-            width: 10,
-            height: 20,
-          ),
-          Container(
-              width: 600,
-              height: 400,
-              child: displayPage == "Vaccine"
-                  ? showVaccineHistory(context, authBloc)
-                  : (displayPage == "Person")
-                      ? showPersonHistory(context, authBloc)
-                      : (displayPage == "OPD")
-                          ? showOPDHistory(context, authBloc)
-                          : (displayPage == "Rx")
-                              ? showRxHistory(context, authBloc)
-                              : (displayPage == "Lab")
-                                  ? showLabHistory(context, authBloc)
-                                  : showMessagesHistory(context, authBloc)),
-        ],
+                    Navigator.pushReplacementNamed(context, '/appointments');
+                  },
+                ),
+              ],
+            ),
+            SizedBox(
+              width: 10,
+              height: 10,
+            ),
+            CustomSpinner(toggleSpinner: spinnerVisible),
+            CustomMessage(
+                toggleMessage: messageVisible,
+                toggleMessageType: messageType,
+                toggleMessageTxt: messageTxt),
+            SizedBox(
+              width: 10,
+              height: 10,
+            ),
+            Container(
+                width: 300.0,
+                margin: EdgeInsets.only(top: 25.0),
+                child: TextFormField(
+                  controller: _from,
+                  cursorColor: Colors.blueAccent,
+                  keyboardType: TextInputType.name,
+                  maxLength: 50,
+                  obscureText: false,
+                  onChanged: (value) => formData.from = value,
+                  validator: evalName,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.dashboard),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0)),
+                    hintText: 'From',
+                    labelText: 'From *',
+                    // errorText: snapshot.error,
+                  ),
+                )),
+            Container(
+                width: 300.0,
+                margin: EdgeInsets.only(top: 25.0),
+                child: TextFormField(
+                  controller: _status,
+                  cursorColor: Colors.blueAccent,
+                  keyboardType: TextInputType.name,
+                  maxLength: 50,
+                  obscureText: false,
+                  onChanged: (value) => formData.status = value,
+                  validator: evalName,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.dashboard),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0)),
+                    hintText: 'Status',
+                    labelText: 'Status *',
+                    // errorText: snapshot.error,
+                  ),
+                )),
+            Container(
+                width: 300.0,
+                margin: EdgeInsets.only(top: 25.0),
+                child: TextFormField(
+                  controller: _lab,
+                  cursorColor: Colors.blueAccent,
+                  keyboardType: TextInputType.name,
+                  maxLength: 50,
+                  obscureText: false,
+                  onChanged: (value) => formData.lab = value,
+                  validator: evalName,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.dashboard),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0)),
+                    hintText: 'Pathology',
+                    labelText: 'Pathology *',
+                    // errorText: snapshot.error,
+                  ),
+                )),
+            Container(
+                width: 300.0,
+                margin: EdgeInsets.only(top: 25.0),
+                child: TextFormField(
+                  controller: _results,
+                  cursorColor: Colors.blueAccent,
+                  keyboardType: TextInputType.name,
+                  maxLength: 50,
+                  obscureText: false,
+                  onChanged: (value) => formData.results = value,
+                  validator: evalName,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.dashboard),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0)),
+                    hintText: 'Results',
+                    labelText: 'Results *',
+                    // errorText: snapshot.error,
+                  ),
+                )),
+            Container(
+                width: 300.0,
+                margin: EdgeInsets.only(top: 25.0),
+                child: TextFormField(
+                  controller: _descr,
+                  cursorColor: Colors.blueAccent,
+                  keyboardType: TextInputType.name,
+                  maxLength: 50,
+                  obscureText: false,
+                  onChanged: (value) => formData.descr = value,
+                  validator: evalName,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.dashboard),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0)),
+                    hintText: 'Description',
+                    labelText: 'Description *',
+                    // errorText: snapshot.error,
+                  ),
+                )),
+            Container(
+                width: 300.0,
+                margin: EdgeInsets.only(top: 25.0),
+                child: TextFormField(
+                  controller: _comments,
+                  cursorColor: Colors.blueAccent,
+                  keyboardType: TextInputType.name,
+                  maxLength: 50,
+                  obscureText: false,
+                  onChanged: (value) => formData.comments = value,
+                  validator: evalName,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.dashboard),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0)),
+                    hintText: 'Comments',
+                    labelText: 'Comments *',
+                    // errorText: snapshot.error,
+                  ),
+                )),
+          ],
+        ),
       ),
     );
   }
 
   Widget showVaccineHistory(BuildContext context, AuthBloc authBloc) {
     return StreamBuilder<QuerySnapshot>(
-        stream: getData("Vaccine", auth.currentUser.uid),
+        stream: getData("Vaccine", formData.patientId),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text(
-              'no past Records available.',
-              style: cErrorText,
-            );
+            // return Text('Something went wrong');
+            return showMessage(true, "error", "An un-known error has occured.");
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -201,6 +425,19 @@ class RecordsState extends State<Records> {
                       "Past Vaccine Record:",
                       style: cNavRightText,
                     ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.green),
+                      onPressed: () {
+                        togglePage("DataEntry");
+                      },
+                    ),
+                    SizedBox(width: 20, height: 50),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        _deleteDoc(formData.patientId, "Vaccine", document.id);
+                      },
+                    )
                   ],
                 ),
                 subtitle: Column(
@@ -236,13 +473,11 @@ class RecordsState extends State<Records> {
 
   Widget showPersonHistory(BuildContext context, AuthBloc authBloc) {
     return StreamBuilder<QuerySnapshot>(
-        stream: getData("Person", auth.currentUser.uid),
+        stream: getData("Person", formData.patientId),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text(
-              'no past Records available.',
-              style: cErrorText,
-            );
+            // return Text('Something went wrong');
+            return showMessage(true, "error", "An un-known error has occured.");
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -257,6 +492,12 @@ class RecordsState extends State<Records> {
                     Text(
                       "Person Record:",
                       style: cNavRightText,
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.green),
+                      onPressed: () {
+                        togglePage("DataEntry");
+                      },
                     ),
                   ],
                 ),
@@ -333,15 +574,20 @@ class RecordsState extends State<Records> {
         });
   }
 
+  Widget signinSubmitBtn(context, authBloc) {
+    return ElevatedButton(
+      child: Text('Save'),
+      onPressed: _btnEnabled == true ? () => setData(authBloc) : null,
+    );
+  }
+
   Widget showOPDHistory(BuildContext context, AuthBloc authBloc) {
     return StreamBuilder<QuerySnapshot>(
-        stream: getData("OPD", auth.currentUser.uid),
+        stream: getData("OPD", formData.patientId),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text(
-              'no past Records available.',
-              style: cErrorText,
-            );
+            // return Text('Something went wrong');
+            return showMessage(true, "error", "An un-known error has occured.");
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -357,6 +603,19 @@ class RecordsState extends State<Records> {
                       "Past OPD Record:",
                       style: cNavRightText,
                     ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.green),
+                      onPressed: () {
+                        togglePage("DataEntry");
+                      },
+                    ),
+                    SizedBox(width: 20, height: 50),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        _deleteDoc(formData.patientId, "OPD", document.id);
+                      },
+                    )
                   ],
                 ),
                 subtitle: Column(
@@ -425,13 +684,11 @@ class RecordsState extends State<Records> {
 
   Widget showRxHistory(BuildContext context, AuthBloc authBloc) {
     return StreamBuilder<QuerySnapshot>(
-        stream: getData("Rx", auth.currentUser.uid),
+        stream: getData("Rx", formData.patientId),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text(
-              'no past Records available.',
-              style: cErrorText,
-            );
+            // return Text('Something went wrong');
+            return showMessage(true, "error", "An un-known error has occured.");
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -447,6 +704,19 @@ class RecordsState extends State<Records> {
                       "Past Rx Record:",
                       style: cNavRightText,
                     ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.green),
+                      onPressed: () {
+                        togglePage("DataEntry");
+                      },
+                    ),
+                    SizedBox(width: 20, height: 50),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        _deleteDoc(formData.patientId, "Rx", document.id);
+                      },
+                    )
                   ],
                 ),
                 subtitle: Column(
@@ -505,13 +775,11 @@ class RecordsState extends State<Records> {
 
   Widget showLabHistory(BuildContext context, AuthBloc authBloc) {
     return StreamBuilder<QuerySnapshot>(
-        stream: getData("Lab", auth.currentUser.uid),
+        stream: getData("Lab", formData.patientId),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text(
-              'no past Records available.',
-              style: cErrorText,
-            );
+            // return Text('Something went wrong');
+            return showMessage(true, "error", "An un-known error has occured.");
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -527,6 +795,19 @@ class RecordsState extends State<Records> {
                       "Past Lab Record:",
                       style: cNavRightText,
                     ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.green),
+                      onPressed: () {
+                        togglePage("DataEntry");
+                      },
+                    ),
+                    SizedBox(width: 20, height: 50),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        _deleteDoc(formData.patientId, "Lab", document.id);
+                      },
+                    )
                   ],
                 ),
                 subtitle: Column(
@@ -585,13 +866,11 @@ class RecordsState extends State<Records> {
 
   Widget showMessagesHistory(BuildContext context, AuthBloc authBloc) {
     return StreamBuilder<QuerySnapshot>(
-        stream: getData("Vaccine", auth.currentUser.uid),
+        stream: getData("Vaccine", formData.patientId),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
-            return Text(
-              'no past Records available.',
-              style: cErrorText,
-            );
+            // return Text('Something went wrong');
+            return showMessage(true, "error", "An un-known error has occured.");
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -607,6 +886,19 @@ class RecordsState extends State<Records> {
                       "Message Record:",
                       style: cNavRightText,
                     ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.green),
+                      onPressed: () {
+                        togglePage("DataEntry");
+                      },
+                    ),
+                    SizedBox(width: 20, height: 50),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        _deleteDoc(formData.patientId, "Messages", document.id);
+                      },
+                    )
                   ],
                 ),
                 subtitle: Column(

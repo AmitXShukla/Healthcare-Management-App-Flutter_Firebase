@@ -514,12 +514,17 @@ class CustomAdminDrawer extends StatelessWidget {
             isThreeLine: true,
           ),
           ListTile(
-            leading: Icon(Icons.settings),
+            leading: Icon(Icons.settings, color: Colors.grey),
             title: Text(
               "Admin",
               style: cNavText,
             ),
-            onTap: null,
+            onTap: () => {
+              Navigator.pushReplacementNamed(
+                context,
+                '/admin',
+              )
+            },
           ),
           ElevatedButton(
             child: Text('Logout'),
@@ -605,6 +610,20 @@ class CustomGuestDrawer extends StatelessWidget {
             subtitle: Text('OPD, IPD, Rx, LAB, COVID Vaccine records.'),
             trailing: Icon(Icons.more_vert),
             isThreeLine: true,
+          ),
+          ListTile(
+            leading: Icon(Icons.sms, color: Colors.deepPurple),
+            title: Text(
+              "Messages",
+              style: cNavText,
+            ),
+            onTap: () => {
+              Navigator.pushReplacementNamed(
+                context,
+                '/records',
+              )
+            },
+            subtitle: Text('patient messages'),
           ),
           ElevatedButton(
             child: Text('Logout'),

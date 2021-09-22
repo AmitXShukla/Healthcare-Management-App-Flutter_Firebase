@@ -1,3 +1,5 @@
+import 'dart:html';
+
 import 'package:src/blocs/auth/auth.bloc.dart';
 import 'package:src/shared/custom_components.dart';
 import 'package:src/shared/custom_style.dart';
@@ -6,26 +8,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:src/models/datamodel.dart';
 import 'package:src/blocs/validators.dart';
 
-class Appointments extends StatefulWidget {
-  static const routeName = '/appointments';
+class Admin extends StatefulWidget {
+  static const routeName = '/admin';
   @override
-  AppointmentsState createState() => AppointmentsState();
+  AdminState createState() => AdminState();
 }
 
-class AppointmentsState extends State<Appointments> {
+class AdminState extends State<Admin> {
   bool spinnerVisible = false;
   bool messageVisible = false;
   bool srchVisible = false;
   String messageTxt = "";
   String messageType = "";
-  String dropDownValue = 'New';
-  CollectionReference appointments =
-      FirebaseFirestore.instance.collection('appointments');
+  CollectionReference users = FirebaseFirestore.instance.collection('users');
   final _formKey = GlobalKey<FormState>();
-  AppointmentDataModel formData = AppointmentDataModel();
+  SettingsDataModel formData = SettingsDataModel();
+  bool _btnEnabled = false;
   TextEditingController _nameController = new TextEditingController();
+  TextEditingController _emailController = new TextEditingController();
   TextEditingController _phoneController = new TextEditingController();
-  TextEditingController _statusController = new TextEditingController();
 
   @override
   void initState() {
@@ -42,40 +43,6 @@ class AppointmentsState extends State<Appointments> {
     setState(() => spinnerVisible = !spinnerVisible);
   }
 
-  toggleSearch() {
-    getData(formData);
-    setState(() {
-      srchVisible = !srchVisible;
-    });
-  }
-
-  clearSearch() {
-    _nameController.text = "";
-    _phoneController.text = "";
-    formData.name = null;
-    formData.phone = null;
-    formData.status = null;
-  }
-
-  getData(formData) {
-    Query qry = authBloc.appointments;
-    if (formData.name != null && formData.name.isNotEmpty) {
-      qry = qry.where('name',
-          isEqualTo: formData.name); // For example, to be adapted
-    }
-    if (formData.phone != null && formData.phone.isNotEmpty) {
-      qry = qry.where('phone',
-          isEqualTo: formData.phone); // For example, to be adapted
-    }
-    if (formData.status != null && formData.status == "Complete") {
-      qry = qry.where('status',
-          isEqualTo: "Complete"); // For example, to be adapted
-    } else {
-      qry = qry.where('status', isEqualTo: "New");
-    }
-    return qry.limit(10).snapshots();
-  }
-
   showMessage(bool msgVisible, msgType, message) {
     messageVisible = msgVisible;
     setState(() {
@@ -86,7 +53,41 @@ class AppointmentsState extends State<Appointments> {
     });
   }
 
-  Future<void> _deleteDoc(String docId) async {
+  clearSearch() {
+    _nameController.text = "";
+    _emailController.text = "";
+    _phoneController.text = "";
+    formData.name = null;
+    formData.email = null;
+    formData.phone = null;
+  }
+
+  toggleSearch() {
+    getData(formData);
+    setState(() {
+      srchVisible = !srchVisible;
+    });
+  }
+
+  getData(formData) {
+    Query qry = authBloc.users;
+
+    if (formData.name != null && formData.name.isNotEmpty) {
+      qry = qry.where('name',
+          isEqualTo: formData.name); // For example, to be adapted
+    }
+    if (formData.email != null && formData.email.isNotEmpty) {
+      qry = qry.where('email',
+          isEqualTo: formData.email); // For example, to be adapted
+    }
+    if (formData.phone != null && formData.phone.isNotEmpty) {
+      qry = qry.where('phone',
+          isEqualTo: formData.phone); // For example, to be adapted
+    }
+    return qry.limit(10).snapshots();
+  }
+
+  Future<void> _deleteUser(String docId) async {
     toggleSpinner();
     messageVisible = true;
 
@@ -100,19 +101,19 @@ class AppointmentsState extends State<Appointments> {
             child: ListBody(
               children: <Widget>[
                 Text(
-                    'Are you sure you want to mark this appointment complete? Record #: $docId')
+                    'Are you sure you want to delete this record? Record #: $docId')
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Confirm'),
+              child: Text('Delete'),
               onPressed: () {
-                appointments
+                users
                     .doc(docId)
-                    .update({"status": "Complete"})
+                    .delete()
                     .then((res) =>
-                        {showMessage(true, "success", "Record updated.")})
+                        {showMessage(true, "success", "Record deleted.")})
                     .catchError((error) =>
                         {showMessage(true, "error", error.toString())});
                 Navigator.of(context).pop();
@@ -133,34 +134,11 @@ class AppointmentsState extends State<Appointments> {
   }
 
   @override
-  // Widget build(BuildContext context) {
-  //   AuthBloc authBloc = AuthBloc();
-  //   return Material(
-  //       child: Container(
-  //           margin: EdgeInsets.all(20.0),
-  //           child: authBloc.isSignedIn()
-  //               ? settings(authBloc)
-  //               : loginPage(authBloc)));
-  // }
-
   Widget build(BuildContext context) {
     AuthBloc authBloc = AuthBloc();
     return new Scaffold(
-      appBar: AppBar(title: const Text(cAppointment)),
-      drawer: Drawer(
-          // Add a ListView to the drawer. This ensures the user can scroll
-          // through the options in the drawer if there isn't enough vertical
-          // space to fit everything.
-          // don't need to check if user is Admin or not,
-          // this page is only available to admin
-          // however, apply rules are firebase database level
-          // so that these records are only available to patient
-          // or if operator as Admin role
-          // child: isAdmin
-          //     // ? adminNav(context, authBloc)
-          //     ? CustomAdminDrawer()
-          //     : CustomGuestDrawer()),
-          child: CustomAdminDrawer()),
+      appBar: AppBar(title: const Text(cAdmin)),
+      drawer: Drawer(child: CustomAdminDrawer()),
       body: Center(
         child: Material(
           child: Container(
@@ -196,26 +174,21 @@ class AppointmentsState extends State<Appointments> {
         Center(
           child: Column(
             children: <Widget>[
-              // Container(
-              //   margin: EdgeInsets.only(top: 25.0),
-              // ),
-              // Container(margin: EdgeInsets.all(20.0), child: CustomAdminNav()),
-              // : guestNav(context, authBloc)),
               Container(
                 margin: EdgeInsets.only(top: 25.0),
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.calendar_today_outlined, color: Colors.deepPurple),
+                  Icon(Icons.settings, color: Colors.grey),
                   SizedBox(
                     width: 10,
                     height: 10,
                   ),
-                  Text("Appointments", style: cHeaderDarkText),
+                  Text("Manager Users", style: cHeaderDarkText),
                   SizedBox(
-                    width: 20,
-                    height: 20,
+                    width: 30,
+                    height: 10,
                   ),
                   IconButton(
                     icon: Icon(Icons.search, color: Colors.blueAccent),
@@ -233,7 +206,7 @@ class AppointmentsState extends State<Appointments> {
                   width: 400,
                   height: 600,
                   child: !srchVisible
-                      ? showAppointments(context, authBloc)
+                      ? showUsers(context, authBloc)
                       : showSearch(context, authBloc)),
               Padding(
                 padding: EdgeInsets.symmetric(vertical: 10.0),
@@ -250,13 +223,10 @@ class AppointmentsState extends State<Appointments> {
     );
   }
 
-  Widget showAppointments(BuildContext context, AuthBloc authBloc) {
+  Widget showUsers(BuildContext context, AuthBloc authBloc) {
     return StreamBuilder<QuerySnapshot>(
+        // stream: users.snapshots(),
         stream: getData(formData),
-        // stream: appointments
-        //     .limit(10)
-        //     .orderBy("appointmentDate", descending: true)
-        //     .snapshots(),
         builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.hasError) {
             // return Text('Something went wrong');
@@ -270,7 +240,7 @@ class AppointmentsState extends State<Appointments> {
           return new ListView(
             children: snapshot.data.docs.map((DocumentSnapshot document) {
               return new ListTile(
-                title: new Text(document.data()['appointmentDate']),
+                title: new Text(document.data()['name']),
                 subtitle: Column(
                   children: [
                     const Divider(
@@ -282,8 +252,12 @@ class AppointmentsState extends State<Appointments> {
                     ),
                     Row(
                       children: [
-                        new Text("Name: "),
-                        new Text(document.data()['name']),
+                        new Text("email: "),
+                        new Text(document.data()['email'])
+                      ],
+                    ),
+                    Row(
+                      children: [
                         new Text(" Phone: "),
                         new Text(document.data()['phone']),
                       ],
@@ -292,8 +266,8 @@ class AppointmentsState extends State<Appointments> {
                       children: [
                         Row(
                           children: [
-                            new Text(" Comments: "),
-                            new Text(document.data()['comments']),
+                            new Text(" Author: "),
+                            new Text(document.data()['author']),
                           ],
                         )
                       ],
@@ -302,71 +276,32 @@ class AppointmentsState extends State<Appointments> {
                       children: [
                         Row(
                           children: [
-                            new Text(" Status: "),
-                            new Text(document.data()['status'] == null
-                                ? "New"
-                                : document.data()['status']),
+                            new Text(" Role: "),
+                            new Text(document.data()['role'] == null
+                                ? "None assigned"
+                                : document.data()['role']),
                           ],
                         )
                       ],
                     ),
                     Row(
                       children: [
-                        ElevatedButton(
-                          child: Text('Vaccine'),
+                        IconButton(
+                          icon: Icon(Icons.edit, color: Colors.green),
                           onPressed: () {
-                            Navigator.pushReplacementNamed(context, '/vaccine',
-                                arguments:
-                                    ScreenArguments(document.data()['author']));
-                          },
-                        ),
-                        SizedBox(width: 3, height: 50),
-                        ElevatedButton(
-                          child: Text('OPD/IPD'),
-                          onPressed: () {
-                            Navigator.pushReplacementNamed(context, '/opd',
+                            Navigator.pushReplacementNamed(
+                                context, '/adminedit',
                                 arguments:
                                     ScreenArguments(document.data()['author']));
                           },
                         ),
                         SizedBox(width: 3, height: 50),
                         IconButton(
-                          icon: Icon(Icons.check_box_rounded,
-                              color: Colors.green),
+                          icon: Icon(Icons.delete, color: Colors.red),
                           onPressed: () {
-                            _deleteDoc(document.data()['author']);
+                            _deleteUser(document.data()['author']);
                           },
                         )
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          child: Text('LAB'),
-                          onPressed: () {
-                            Navigator.pushReplacementNamed(context, '/lab',
-                                arguments:
-                                    ScreenArguments(document.data()['author']));
-                          },
-                        ),
-                        SizedBox(width: 3, height: 50),
-                        ElevatedButton(
-                          child: Text('Rx'),
-                          onPressed: () {
-                            Navigator.pushReplacementNamed(context, '/rx',
-                                arguments:
-                                    ScreenArguments(document.data()['author']));
-                          },
-                        ),
-                        SizedBox(width: 3, height: 50),
-                        ElevatedButton(
-                          child: Text('Message'),
-                          onPressed: () {
-                            Navigator.pushReplacementNamed(context, '/messages',
-                                arguments:
-                                    ScreenArguments(document.data()['author']));
-                          },
-                        ),
                       ],
                     )
                   ],
@@ -423,8 +358,8 @@ class AppointmentsState extends State<Appointments> {
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.always,
-      // onChanged: () =>
-      //     setState(() => _btnEnabled = _formKey.currentState.validate()),
+      onChanged: () =>
+          setState(() => _btnEnabled = _formKey.currentState.validate()),
       child: Center(
         child: Column(
           children: <Widget>[
@@ -458,6 +393,28 @@ class AppointmentsState extends State<Appointments> {
                 width: 300.0,
                 margin: EdgeInsets.only(top: 25.0),
                 child: TextFormField(
+                  controller: _emailController,
+                  cursorColor: Colors.blueAccent,
+                  keyboardType: TextInputType.emailAddress,
+                  maxLength: 50,
+                  obscureText: false,
+                  onChanged: (value) => formData.email = value,
+                  validator: evalEmail,
+                  decoration: InputDecoration(
+                    icon: Icon(Icons.email),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.0)),
+                    hintText: 'name@domain.com',
+                    labelText: 'emailID *',
+                  ),
+                )),
+            Container(
+              margin: EdgeInsets.only(top: 5.0),
+            ),
+            Container(
+                width: 300.0,
+                margin: EdgeInsets.only(top: 25.0),
+                child: TextFormField(
                   controller: _phoneController,
                   cursorColor: Colors.blueAccent,
                   keyboardType: TextInputType.phone,
@@ -473,35 +430,6 @@ class AppointmentsState extends State<Appointments> {
                     labelText: 'phone *',
                   ),
                 )),
-            Container(
-              width: 100.0,
-              margin: EdgeInsets.only(top: 25.0),
-              child: DropdownButton<String>(
-                value: dropDownValue,
-                icon: Icon(Icons.settings),
-                iconSize: 24,
-                elevation: 16,
-                hint: Text("ID Type"),
-                style: TextStyle(color: Colors.deepPurple),
-                underline: Container(
-                  height: 2,
-                  color: Colors.deepPurpleAccent,
-                ),
-                onChanged: (String newValue) {
-                  formData.status = newValue;
-                  setState(() {
-                    dropDownValue = newValue;
-                  });
-                },
-                items: <String>['New', 'Complete']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-            ),
             Container(
               margin: EdgeInsets.only(top: 25.0),
             ),

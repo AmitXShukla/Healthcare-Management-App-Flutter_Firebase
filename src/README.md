@@ -1,3 +1,7 @@
+TODO
+update installation instructions
+update youtubelink
+
 # Flutter FireBase Healthcare Management App
 Complete Healthcare Management (Patient, OPD, IPD, Rx, Lab) in Flutter Firebase App for iOS Android and Web
 
@@ -12,7 +16,6 @@ Complete Healthcare Management (Patient, OPD, IPD, Rx, Lab) in Flutter Firebase 
 # Elish HMS
 
 Elish Healthcare Management System App
-DO NOT CLONE - work in progress
 
 ## Objective 
 Manage OPD, IPD, Pathology, WebMD, Rx, Patient Appointments<br/><br/>
