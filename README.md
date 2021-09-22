@@ -67,6 +67,7 @@ Backend:
     <li>Download This GitHub repository</li>
     <li>install Flutter packages *pub get) and Flutter web -> Flutter create .</li>
     <li>Setup firebase account/project</li>
+    <li>Copy Firebase Project Config settings and replace variable firebaseConfig at src/web/index.html</li>
     <li>enable Firebase social authentications</li>
     <li>update Firebase Rules</li>
 
