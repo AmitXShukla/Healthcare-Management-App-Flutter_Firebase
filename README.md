@@ -21,7 +21,8 @@ Patient's private data is not stored in app and location tracing functionality i
 ## Getting Started
 
 This project is a community version and is absolutely free for private use.<br/>
-<a href="https://www.youtube.com/playlist?list=PLp0TENYyY8lHNMTAlrfVQKzAvQo3yzHYk">click here for Demo & Video tutorials</a>
+<a href="https://www.youtube.com/playlist?list=PLp0TENYyY8lHcc8mZiYG83sbsCea2xd3r">click here for Demo & Video tutorials</a>
+
 ## Technologies
 ```sbtshell)
 Frontend: Flutter
