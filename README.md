@@ -23,12 +23,11 @@ Patient's private data is not stored in app and location tracing functionality i
 This project is a community version and is absolutely free for private use.<br/>
 <a href="https://www.youtube.com/playlist?list=PLp0TENYyY8lHNMTAlrfVQKzAvQo3yzHYk">click here for Demo & Video tutorials</a>
 ## Technologies
-```sbtshell
+```sbtshell)
 Frontend: Flutter
-Backend:
-        Option 1: Google Firestore/Firebase
-            or
-        Option 2: NodeJS + Oracle or MYSql or MSSQL Server (not available as community version)
+Backend:Google Firestore/Firebase
+Messages: LOOM SDK
+WebView: loom-app (using Angular version
 ``` 
 
 ## Related Apps

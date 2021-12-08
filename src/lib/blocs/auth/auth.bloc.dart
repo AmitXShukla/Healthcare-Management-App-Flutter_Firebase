@@ -18,6 +18,10 @@ class AuthBloc extends Object with Validators {
     return auth.currentUser != null;
   }
 
+  getUID() {
+    return auth.currentUser.uid;
+  }
+
   signInWithEmail(LoginDataModel formData) async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(

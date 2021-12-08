@@ -22,6 +22,8 @@ import 'package:src/views/admin/adminedit.dart';
 import 'package:src/views/user/person.dart';
 import 'package:src/views/user/records.dart';
 import 'package:src/views/user/appointment.dart';
+import 'package:src/views/user/loom.dart';
+import 'package:src/views/user/loomdocs.dart';
 import 'package:src/views/scm/purchase.dart';
 import 'package:src/views/scm/msr.dart';
 import 'package:src/views/scm/center.dart';
@@ -66,6 +68,8 @@ class App extends StatelessWidget {
         Person.routeName: (context) => Person(),
         Records.routeName: (context) => Records(),
         Appointment.routeName: (context) => Appointment(),
+        Loom.routeName: (context) => Loom(),
+        LoomDocs.routeName: (context) => LoomDocs(),
         Appointments.routeName: (context) => Appointments(),
         Vaccine.routeName: (context) => Vaccine(),
         OPD.routeName: (context) => OPD(),

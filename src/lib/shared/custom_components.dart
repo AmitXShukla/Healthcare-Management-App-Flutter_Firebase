@@ -483,6 +483,20 @@ class CustomAdminDrawer extends StatelessWidget {
             subtitle: Text('patient messages'),
           ),
           ListTile(
+            leading: Icon(Icons.movie, color: Colors.green),
+            title: Text(
+              "Video",
+              style: cNavText,
+            ),
+            onTap: () => {
+              Navigator.pushReplacementNamed(
+                context,
+                '/loomdocs',
+              )
+            },
+            subtitle: Text('Video messages'),
+          ),
+          ListTile(
             leading: Icon(Icons.dashboard, color: Colors.deepOrange),
             title: Text(
               "Supply Chain",
@@ -614,7 +628,7 @@ class CustomGuestDrawer extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.sms, color: Colors.deepPurple),
             title: Text(
-              "Messages",
+              "Text",
               style: cNavText,
             ),
             onTap: () => {
@@ -624,6 +638,20 @@ class CustomGuestDrawer extends StatelessWidget {
               )
             },
             subtitle: Text('patient messages'),
+          ),
+          ListTile(
+            leading: Icon(Icons.movie, color: Colors.green),
+            title: Text(
+              "Video",
+              style: cNavText,
+            ),
+            onTap: () => {
+              Navigator.pushReplacementNamed(
+                context,
+                '/loomrecord',
+              )
+            },
+            subtitle: Text('Video messages'),
           ),
           ElevatedButton(
             child: Text('Logout'),
