@@ -50,7 +50,7 @@ export default function App() {
       }
 
       const { configureButton } = await setup({
-        apiKey: "454de8ec-4232-415a-9199-cd95cfbdfb85"
+        apiKey: ""
       });
 
       const sdkButton = configureButton({ element: buttonRec });

@@ -36,7 +36,9 @@ class LoomDocsState extends State<LoomDocs> {
   void initState() {
     AuthBloc authBloc = AuthBloc();
     // this is accessing Angular app at localhost:4200
-    _url = "http://localhost:4200/messages/" + authBloc.getUID();
+    // _url = "http://localhost:4200/messages/" + authBloc.getUID();
+    _url =
+        "http://localhost:4200/messages/" + "2de930ded8084a45bb2542c21ebb162d";
     getData(authBloc);
     main();
     super.initState();

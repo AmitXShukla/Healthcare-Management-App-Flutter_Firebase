@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { isSupported, setup } from "@loomhq/loom-sdk";
+// import { isSupported, setup } from "@loomhq/loom-sdk/dist/cjs/safe";
 import { oembed } from "@loomhq/loom-embed";
 
 @Component({
@@ -13,7 +14,7 @@ export class MessagesComponent implements OnInit {
   constructor(private _router: ActivatedRoute) { }
 
   title = 'HMS-LOOM-App';
-  API_KEY = "454de8ec-4232-415a-9199-cd95cfbdfb85";
+  API_KEY = "";
   BUTTON_ID = "loom-sdk-button";
 
   insertEmbedPlayer(html: string) {
@@ -26,21 +27,23 @@ export class MessagesComponent implements OnInit {
   }
 
   async ngOnInit() {
-    let id = this._router.snapshot.paramMap.get('id');
+    const id = "https://www.loom.com/share/" + this._router.snapshot.paramMap.get('id');
     this.init();
     const root = document.getElementById("app");
     if (!root) { return; }
-    root.innerHTML = `<button id="${this.BUTTON_ID}">Record</button>`;
+    root.innerHTML = `<button id="${this.BUTTON_ID}">Show Video</button>`;
     const button = document.getElementById(this.BUTTON_ID);
     if (!button) { return; }
-    const { configureButton } = await setup({ apiKey: "454de8ec-4232-415a-9199-cd95cfbdfb85" });
-    const sdkButton = configureButton({ element: button });
-    sdkButton.on("insert-click",
-      async video => {
-        const { html } = await oembed(video.sharedUrl, { width: 400 });
-        this.setData(video.sharedUrl);
-        this.insertEmbedPlayer(html);
-      });
+    const { html } = await oembed(id, { width: 400 });
+    this.insertEmbedPlayer(html);
+    // const { configureButton } = await setup({ apiKey: "" });
+    // const sdkButton = configureButton({ element: button });
+    // sdkButton.on("insert-click",
+    //   async video => {
+    //     // const { html } = await oembed(video.sharedUrl, { width: 400 });
+    //     const { html } = await oembed(id, { width: 400 });
+    //     this.insertEmbedPlayer(html);
+    //   });
   }
 
   setData(url: string) {
